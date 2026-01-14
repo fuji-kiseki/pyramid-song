@@ -25,6 +25,7 @@ main =
 
 type alias Model =
     { images : List (Maybe Image)
+    , modal : { target : Maybe Int }
     }
 
 
@@ -45,6 +46,7 @@ init _ =
             , Nothing
             , Nothing
             ]
+      , modal = { target = Nothing }
       }
     , Cmd.none
     )
@@ -53,6 +55,8 @@ init _ =
 type Msg
     = ChangePicture Int Image
     | GotFiles Int (List File)
+    | OpenModal Int
+    | CloseModal
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -75,11 +79,17 @@ update msg model =
             )
 
         GotFiles index files ->
-            ( model
+            ( { model | modal = { target = Nothing } }
             , List.head files
                 |> Maybe.map (setImage index)
                 |> Maybe.withDefault Cmd.none
             )
+
+        OpenModal target ->
+            ( { model | modal = { target = Just target } }, Cmd.none )
+
+        CloseModal ->
+            ( { model | modal = { target = Nothing } }, Cmd.none )
 
 
 setImage : Int -> File -> Cmd Msg
@@ -95,6 +105,12 @@ view model =
         [ Keyed.node "ul"
             [ class "grid grid-cols-3 grid-rows-3 gap-1 max-w-fit m-auto" ]
             (List.indexedMap viewKeyedImage model.images)
+        , case model.modal.target of
+            Just target ->
+                viewModal target
+
+            Nothing ->
+                text ""
         ]
 
 
@@ -105,24 +121,9 @@ viewKeyedImage index image =
 
 viewMaybeImage : Int -> Maybe Image -> Html Msg
 viewMaybeImage index image =
-    let
-        inputId =
-            "image-" ++ String.fromInt index
-    in
-    div []
-        [ input
-            [ type_ "file"
-            , id inputId
-            , multiple False
-            , accept "image/*"
-            , value ""
-            , on "change" (Decode.map (GotFiles index) filesDecoder)
-            , class "hidden"
-            ]
-            []
-        , label
+    div [ onClick (OpenModal index) ]
+        [ div
             [ class "flex items-center select-none justify-center overflow-hidden h-50 w-50 cursor-pointer aspect-square"
-            , for inputId
             ]
             [ case image of
                 Just { url, name } ->
@@ -130,6 +131,37 @@ viewMaybeImage index image =
 
                 Nothing ->
                     imagePlusIcon [ Svg.Attributes.class "h-6 w-6" ]
+            ]
+        ]
+
+
+viewModal : Int -> Html Msg
+viewModal index =
+    let
+        inputId =
+            "file-input"
+    in
+    div [ class "fixed inset-0 flex items-center justify-center" ]
+        [ div
+            [ class "flex justify-center items-center gap-4  bg-white border border-gray-700 rounded p-4" ]
+            [ input
+                [ type_ "file"
+                , id inputId
+                , multiple False
+                , accept "image/*"
+                , value ""
+                , on "change" (Decode.map (GotFiles index) filesDecoder)
+                , class "hidden"
+                ]
+                []
+            , label
+                [ class "cursor-pointer"
+                , for inputId
+                ]
+                [ imagePlusIcon [ Svg.Attributes.class "h-6 w-6" ] ]
+            , button
+                [ onClick CloseModal, class "p-2 border rounded bg-gray-700 text-white m-2" ]
+                [ text "close" ]
             ]
         ]
 
