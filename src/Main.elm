@@ -25,7 +25,7 @@ main =
 
 type alias Model =
     { images : List (Maybe Image)
-    , modal : { target : Maybe Int }
+    , modal : { target : Maybe Int, input : String }
     }
 
 
@@ -46,7 +46,7 @@ init _ =
             , Nothing
             , Nothing
             ]
-      , modal = { target = Nothing }
+      , modal = { target = Nothing, input = "" }
       }
     , Cmd.none
     )
@@ -57,6 +57,7 @@ type Msg
     | GotFiles Int (List File)
     | OpenModal Int
     | CloseModal
+    | ChangeModalInput String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -79,17 +80,20 @@ update msg model =
             )
 
         GotFiles index files ->
-            ( { model | modal = { target = Nothing } }
+            ( { model | modal = { target = Nothing, input = model.modal.input } }
             , List.head files
                 |> Maybe.map (setImage index)
                 |> Maybe.withDefault Cmd.none
             )
 
         OpenModal target ->
-            ( { model | modal = { target = Just target } }, Cmd.none )
+            ( { model | modal = { target = Just target, input = model.modal.input } }, Cmd.none )
 
         CloseModal ->
-            ( { model | modal = { target = Nothing } }, Cmd.none )
+            ( { model | modal = { target = Nothing, input = model.modal.input } }, Cmd.none )
+
+        ChangeModalInput value ->
+            ( { model | modal = { target = model.modal.target, input = value } }, Cmd.none )
 
 
 setImage : Int -> File -> Cmd Msg
@@ -107,7 +111,7 @@ view model =
             (List.indexedMap viewKeyedImage model.images)
         , case model.modal.target of
             Just target ->
-                viewModal target
+                viewModal target model.modal.input
 
             Nothing ->
                 text ""
@@ -135,8 +139,8 @@ viewMaybeImage index image =
         ]
 
 
-viewModal : Int -> Html Msg
-viewModal index =
+viewModal : Int -> String -> Html Msg
+viewModal index modalValue =
     let
         inputId =
             "file-input"
@@ -159,6 +163,25 @@ viewModal index =
                 , for inputId
                 ]
                 [ imagePlusIcon [ Svg.Attributes.class "h-6 w-6" ] ]
+            , input
+                [ type_ "text"
+                , name "url"
+                , placeholder "url"
+                , on "keydown"
+                    (Decode.field "key" Decode.string
+                        |> Decode.andThen
+                            (\key ->
+                                if key == "Enter" then
+                                    Decode.succeed (ChangePicture index { url = modalValue, name = modalValue })
+
+                                else
+                                    Decode.fail ""
+                            )
+                    )
+                , onInput ChangeModalInput
+                , class "border border-gray-500"
+                ]
+                []
             , button
                 [ onClick CloseModal, class "p-2 border rounded bg-gray-700 text-white m-2" ]
                 [ text "close" ]
