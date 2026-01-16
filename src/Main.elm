@@ -1,12 +1,14 @@
 module Main exposing (..)
 
 import Browser
+import Dict exposing (Dict)
 import File exposing (File)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy2)
+import Image exposing (Image, ImageState, setImage)
 import Json.Decode as Decode
 import Svg exposing (circle, path, svg)
 import Svg.Attributes exposing (cx, cy, d, fill, r, stroke, strokeLinecap, strokeLinejoin, strokeWidth, viewBox)
@@ -24,28 +26,17 @@ main =
 
 
 type alias Model =
-    { images : List (Maybe Image)
+    { images : Dict Int ImageState
     , modal : { target : Maybe Int, input : String }
     }
-
-
-type alias Image =
-    { url : String, name : String }
 
 
 init : () -> ( Model, Cmd Msg )
 init _ =
     ( { images =
-            [ Nothing
-            , Nothing
-            , Nothing
-            , Nothing
-            , Nothing
-            , Nothing
-            , Nothing
-            , Nothing
-            , Nothing
-            ]
+            List.range 0 8
+                |> List.map (\i -> ( i, Image.Empty ))
+                |> Dict.fromList
       , modal = { target = Nothing, input = "" }
       }
     , Cmd.none
@@ -53,8 +44,8 @@ init _ =
 
 
 type Msg
-    = ChangePicture Int Image
-    | GotFiles Int (List File)
+    = GotFiles Int (List File)
+    | ImageLoaded Int Image
     | OpenModal Int
     | CloseModal
     | ChangeModalInput String
@@ -63,27 +54,17 @@ type Msg
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        ChangePicture index newPicture ->
-            ( { model
-                | images =
-                    List.indexedMap
-                        (\i image ->
-                            if i == index then
-                                Just newPicture
-
-                            else
-                                image
-                        )
-                        model.images
-              }
-            , Cmd.none
+        GotFiles index files ->
+            ( model
+            , List.head files
+                |> Maybe.map setImage
+                |> Maybe.map (Task.perform <| ImageLoaded index)
+                |> Maybe.withDefault Cmd.none
             )
 
-        GotFiles index files ->
-            ( { model | modal = { target = Nothing, input = model.modal.input } }
-            , List.head files
-                |> Maybe.map (setImage index)
-                |> Maybe.withDefault Cmd.none
+        ImageLoaded index image ->
+            ( { model | images = Dict.insert index (Image.Loaded image) model.images }
+            , Cmd.none
             )
 
         OpenModal target ->
@@ -96,19 +77,15 @@ update msg model =
             ( { model | modal = { target = model.modal.target, input = value } }, Cmd.none )
 
 
-setImage : Int -> File -> Cmd Msg
-setImage index file =
-    File.toUrl file
-        |> Task.map (\url -> { url = url, name = File.name file })
-        |> Task.perform (ChangePicture index)
-
-
 view : Model -> Html Msg
 view model =
     div []
         [ Keyed.node "ul"
             [ class "grid grid-cols-3 grid-rows-3 gap-1 max-w-fit m-auto" ]
-            (List.indexedMap viewKeyedImage model.images)
+            (model.images
+                |> Dict.toList
+                |> List.map (\( index, imageState ) -> viewKeyedImage index imageState)
+            )
         , case model.modal.target of
             Just target ->
                 viewModal target model.modal.input
@@ -118,23 +95,23 @@ view model =
         ]
 
 
-viewKeyedImage : Int -> Maybe Image -> ( String, Html Msg )
+viewKeyedImage : Int -> ImageState -> ( String, Html Msg )
 viewKeyedImage index image =
-    ( String.fromInt index, lazy2 viewMaybeImage index image )
+    ( String.fromInt index, lazy2 viewImage index image )
 
 
-viewMaybeImage : Int -> Maybe Image -> Html Msg
-viewMaybeImage index image =
+viewImage : Int -> ImageState -> Html Msg
+viewImage index image =
     div [ onClick (OpenModal index) ]
         [ div
             [ class "flex items-center select-none justify-center overflow-hidden h-50 w-50 cursor-pointer aspect-square"
             ]
             [ case image of
-                Just { url, name } ->
-                    img [ src url, alt name, draggable "false", class "object-cover w-full h-full block" ] []
-
-                Nothing ->
+                Image.Empty ->
                     imagePlusIcon [ Svg.Attributes.class "h-6 w-6" ]
+
+                Image.Loaded { url, name } ->
+                    img [ src url, alt name, draggable "false", class "object-cover w-full h-full block" ] []
             ]
         ]
 
@@ -172,7 +149,8 @@ viewModal index modalValue =
                         |> Decode.andThen
                             (\key ->
                                 if key == "Enter" then
-                                    Decode.succeed (ChangePicture index { url = modalValue, name = modalValue })
+                                    -- TODO: validate url
+                                    Decode.succeed (ImageLoaded index { url = modalValue, name = modalValue })
 
                                 else
                                     Decode.fail ""
