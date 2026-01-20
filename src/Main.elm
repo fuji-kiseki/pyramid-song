@@ -13,6 +13,7 @@ import Json.Decode as Decode
 import Svg exposing (circle, path, svg)
 import Svg.Attributes exposing (cx, cy, d, fill, r, stroke, strokeLinecap, strokeLinejoin, strokeWidth, viewBox)
 import Task exposing (..)
+import Views.Modal exposing (viewModal)
 
 
 main : Program () Model Msg
@@ -87,8 +88,48 @@ view model =
                 |> List.map (\( index, imageState ) -> viewKeyedImage index imageState)
             )
         , case model.modal.target of
-            Just target ->
-                viewModal target model.modal.input
+            Just index ->
+                let
+                    inputId =
+                        "file-input"
+                in
+                viewModal { onClose = CloseModal, onConfirm = CloseModal }
+                    [ input
+                        [ type_ "file"
+                        , id inputId
+                        , multiple False
+                        , accept "image/*"
+                        , value ""
+                        , on "change" (Decode.map (GotFiles index) filesDecoder)
+                        , class "hidden"
+                        ]
+                        []
+                    , label
+                        [ class "block w-fit cursor-pointer"
+                        , for inputId
+                        ]
+                        [ imagePlusIcon [ Svg.Attributes.class "h-6 w-6" ] ]
+                    , input
+                        [ type_ "text"
+                        , name "url"
+                        , placeholder "url"
+                        , on "keydown"
+                            (Decode.field "key" Decode.string
+                                |> Decode.andThen
+                                    (\key ->
+                                        if key == "Enter" then
+                                            -- TODO: validate url
+                                            Decode.succeed (ImageLoaded index { url = model.modal.input, name = model.modal.input })
+
+                                        else
+                                            Decode.fail ""
+                                    )
+                            )
+                        , onInput ChangeModalInput
+                        , class "border border-gray-500"
+                        ]
+                        []
+                    ]
 
             Nothing ->
                 text ""
@@ -112,57 +153,6 @@ viewImage index image =
 
                 Image.Loaded { url, name } ->
                     img [ src url, alt name, draggable "false", class "object-cover w-full h-full block" ] []
-            ]
-        ]
-
-
-viewModal : Int -> String -> Html Msg
-viewModal index modalValue =
-    let
-        inputId =
-            "file-input"
-    in
-    div [ class "fixed inset-0 flex items-center justify-center" ]
-        [ div
-            [ class "flex justify-center items-center gap-4  bg-white border border-gray-700 rounded p-4" ]
-            [ input
-                [ type_ "file"
-                , id inputId
-                , multiple False
-                , accept "image/*"
-                , value ""
-                , on "change" (Decode.map (GotFiles index) filesDecoder)
-                , class "hidden"
-                ]
-                []
-            , label
-                [ class "cursor-pointer"
-                , for inputId
-                ]
-                [ imagePlusIcon [ Svg.Attributes.class "h-6 w-6" ] ]
-            , input
-                [ type_ "text"
-                , name "url"
-                , placeholder "url"
-                , on "keydown"
-                    (Decode.field "key" Decode.string
-                        |> Decode.andThen
-                            (\key ->
-                                if key == "Enter" then
-                                    -- TODO: validate url
-                                    Decode.succeed (ImageLoaded index { url = modalValue, name = modalValue })
-
-                                else
-                                    Decode.fail ""
-                            )
-                    )
-                , onInput ChangeModalInput
-                , class "border border-gray-500"
-                ]
-                []
-            , button
-                [ onClick CloseModal, class "p-2 border rounded bg-gray-700 text-white m-2" ]
-                [ text "close" ]
             ]
         ]
 
