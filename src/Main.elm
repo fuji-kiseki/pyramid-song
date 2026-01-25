@@ -8,7 +8,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy2)
-import Image exposing (Image, ImageState, setImage)
+import Image exposing (Image, ImageSelector, ImageState, setImage)
 import Json.Decode as Decode
 import Svg exposing (circle, path, svg)
 import Svg.Attributes exposing (cx, cy, d, fill, r, stroke, strokeLinecap, strokeLinejoin, strokeWidth, viewBox)
@@ -28,7 +28,14 @@ main =
 
 type alias Model =
     { images : Dict Int ImageState
-    , modal : { target : Maybe Int, input : String }
+    , modal : { target : Maybe Int }
+    , imageSelector : ImageSelector
+    }
+
+
+type alias ImagePreview =
+    { search : String
+    , images : Dict String ImageState
     }
 
 
@@ -38,44 +45,84 @@ init _ =
             List.range 0 8
                 |> List.map (\i -> ( i, Image.Empty ))
                 |> Dict.fromList
-      , modal = { target = Nothing, input = "" }
+      , modal = { target = Nothing }
+      , imageSelector =
+            { selectedCategory = Image.Upload
+            , searchQuery = ""
+            , selectedImage = Nothing
+            , availableImages = []
+            }
       }
     , Cmd.none
     )
 
 
 type Msg
-    = GotFiles Int (List File)
+    = GotFiles (List File)
     | ImageLoaded Int Image
     | OpenModal Int
     | CloseModal
-    | ChangeModalInput String
+    | ChangeSearchQuery String
+    | AddImage Image.ImageOption
+    | SelectImage String
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotFiles index files ->
+        GotFiles files ->
             ( model
             , List.head files
                 |> Maybe.map setImage
-                |> Maybe.map (Task.perform <| ImageLoaded index)
+                |> Maybe.map
+                    (Task.perform <|
+                        \{ name, url } ->
+                            AddImage
+                                { id = name
+                                , filename = name
+                                , category = Image.Upload
+                                , url = url
+                                }
+                    )
                 |> Maybe.withDefault Cmd.none
             )
 
         ImageLoaded index image ->
-            ( { model | images = Dict.insert index (Image.Loaded image) model.images }
+            ( { model | images = Dict.insert index (Image.Loaded image) model.images, modal = { target = Nothing } }
             , Cmd.none
             )
 
         OpenModal target ->
-            ( { model | modal = { target = Just target, input = model.modal.input } }, Cmd.none )
+            ( { model | modal = { target = Just target } }, Cmd.none )
 
         CloseModal ->
-            ( { model | modal = { target = Nothing, input = model.modal.input } }, Cmd.none )
+            ( { model | modal = { target = Nothing } }, Cmd.none )
 
-        ChangeModalInput value ->
-            ( { model | modal = { target = model.modal.target, input = value } }, Cmd.none )
+        ChangeSearchQuery value ->
+            let
+                selector =
+                    model.imageSelector
+            in
+            ( { model | imageSelector = { selector | searchQuery = value } }, Cmd.none )
+
+        AddImage options ->
+            let
+                selector =
+                    model.imageSelector
+            in
+            ( { model
+                | imageSelector =
+                    { selector | availableImages = selector.availableImages ++ [ options ] }
+              }
+            , Cmd.none
+            )
+
+        SelectImage selected ->
+            let
+                selector =
+                    model.imageSelector
+            in
+            ( { model | imageSelector = { selector | selectedImage = Just selected } }, Cmd.none )
 
 
 view : Model -> Html Msg
@@ -93,14 +140,25 @@ view model =
                     inputId =
                         "file-input"
                 in
-                viewModal { onClose = CloseModal, onConfirm = CloseModal }
+                viewModal
+                    { onClose = CloseModal
+                    , onConfirm =
+                        Maybe.andThen
+                            (\selectedId ->
+                                model.imageSelector.availableImages
+                                    |> List.filter (\image -> image.id == selectedId)
+                                    |> List.head
+                            )
+                            model.imageSelector.selectedImage
+                            |> Maybe.map (\{ id, url } -> ImageLoaded index { name = id, url = url })
+                    }
                     [ input
                         [ type_ "file"
                         , id inputId
                         , multiple False
                         , accept "image/*"
                         , value ""
-                        , on "change" (Decode.map (GotFiles index) filesDecoder)
+                        , on "change" (Decode.map GotFiles filesDecoder)
                         , class "hidden"
                         ]
                         []
@@ -113,22 +171,55 @@ view model =
                         [ type_ "text"
                         , name "url"
                         , placeholder "url"
+                        , value model.imageSelector.searchQuery
                         , on "keydown"
                             (Decode.field "key" Decode.string
                                 |> Decode.andThen
                                     (\key ->
                                         if key == "Enter" then
                                             -- TODO: validate url
-                                            Decode.succeed (ImageLoaded index { url = model.modal.input, name = model.modal.input })
+                                            Decode.succeed
+                                                (AddImage
+                                                    { id = model.imageSelector.searchQuery
+                                                    , filename = model.imageSelector.searchQuery
+                                                    , category = Image.Upload
+                                                    , url = model.imageSelector.searchQuery
+                                                    }
+                                                )
 
                                         else
                                             Decode.fail ""
                                     )
                             )
-                        , onInput ChangeModalInput
+                        , onInput ChangeSearchQuery
                         , class "border border-gray-500"
                         ]
                         []
+                    , div
+                        [ class "flex flex-wrap justify-center gap-2" ]
+                        (List.map
+                            (\i ->
+                                img
+                                    [ width 150
+                                    , height 150
+                                    , src i.url
+                                    , onClick (SelectImage i.id)
+                                    , class "rounded-md"
+                                    , model.imageSelector.selectedImage
+                                        |> Maybe.map
+                                            (\id ->
+                                                if id == i.id then
+                                                    class "ring-4"
+
+                                                else
+                                                    class "hover:ring-2"
+                                            )
+                                        |> Maybe.withDefault (class "hover:ring-2")
+                                    ]
+                                    []
+                            )
+                            model.imageSelector.availableImages
+                        )
                     ]
 
             Nothing ->

@@ -9,7 +9,7 @@ import Svg.Attributes exposing (d, fill, stroke, strokeLinecap, strokeLinejoin, 
 
 type alias ModalConfig msg =
     { onClose : msg
-    , onConfirm : msg
+    , onConfirm : Maybe msg
     }
 
 
@@ -17,33 +17,40 @@ viewModal : ModalConfig msg -> List (Html msg) -> Html msg
 viewModal { onClose, onConfirm } content =
     div [ class "fixed inset-0 flex items-center justify-center" ]
         [ div
-            [ class "flex flex-col justify-center gap-4  bg-white border border-gray-700 rounded p-4" ]
-            [ header [ class "flex justify-end items-center" ]
-                [ button
-                    [ onClick onClose, class "inline-block cursor-pointer text-gray-600 hover:text-gray-950" ]
-                    [ viewCloseSvg [ Svg.Attributes.class "ml-auto h-6 w-6" ] ]
-                ]
-            , div [] content
-            , footer [ class "flex justify-end" ]
-                [ button
-                    [ onClick onConfirm, class "p-2 border cursor-pointer" ]
+            [ class "flex flex-col justify-center w-3xl gap-4 bg-white border border-gray-200 rounded max-w-8/10 max-h-8/10" ]
+            [ div [ class "p-4 overflow-auto" ] content
+            , footer [ class "flex justify-between bg-gray-50 border-t border-gray-200 p-4" ]
+                [ button [ baseBtnStyle, closeBtnStyle, onClick onClose ] [ text "Cancel" ]
+                , button
+                    (baseBtnStyle
+                        :: (case onConfirm of
+                                Nothing ->
+                                    [ confirmBtnStyle False ]
+
+                                Just msg ->
+                                    [ confirmBtnStyle True, onClick msg ]
+                           )
+                    )
                     [ text "confirm" ]
                 ]
             ]
         ]
 
 
-viewCloseSvg : List (Svg.Attribute msg) -> Html msg
-viewCloseSvg extraAttrs =
-    svg
-        ([ viewBox "0 0 24 24"
-         , fill "none"
-         , stroke "currentColor"
-         , strokeWidth "2"
-         , strokeLinecap "round"
-         , strokeLinejoin "round"
-         ]
-            ++ extraAttrs
-        )
-        [ path [ d "M18 6 6 18M6 6l12 12" ] []
-        ]
+baseBtnStyle : Attribute msg
+baseBtnStyle =
+    class "p-2 rounded-md transition-colors duration-200"
+
+
+closeBtnStyle : Attribute msg
+closeBtnStyle =
+    class "p-2 bg-white cursor-pointer border rounded-md border-gray-200 hover:bg-gray-100"
+
+
+confirmBtnStyle : Bool -> Attribute msg
+confirmBtnStyle isActive =
+    if isActive then
+        class "bg-neutral-950 text-white cursor-pointer hover:bg-neutral-800"
+
+    else
+        class "bg-gray-200 text-neutral-400 cursor-not-allowed"
