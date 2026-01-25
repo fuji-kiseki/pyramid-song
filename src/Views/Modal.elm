@@ -3,8 +3,6 @@ module Views.Modal exposing (ModalConfig, viewModal)
 import Html exposing (..)
 import Html.Attributes exposing (class)
 import Html.Events exposing (..)
-import Svg exposing (path, svg)
-import Svg.Attributes exposing (d, fill, stroke, strokeLinecap, strokeLinejoin, strokeWidth, viewBox)
 
 
 type alias ModalConfig msg =
