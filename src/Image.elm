@@ -47,3 +47,8 @@ type alias ImageOption =
     , category : ImageCategory
     , url : String
     }
+
+
+alterImageSelector : (ImageSelector -> ImageSelector) -> { r | imageSelector : ImageSelector } -> { r | imageSelector : ImageSelector }
+alterImageSelector transform model =
+    { model | imageSelector = transform model.imageSelector }

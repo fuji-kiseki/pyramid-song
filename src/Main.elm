@@ -8,7 +8,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy2)
-import Image exposing (Image, ImageSelector, ImageState, setImage)
+import Image exposing (Image, ImageSelector, ImageState, alterImageSelector, setImage)
 import Json.Decode as Decode
 import Svg exposing (circle, path, svg)
 import Svg.Attributes exposing (cx, cy, d, fill, r, stroke, strokeLinecap, strokeLinejoin, strokeWidth, viewBox)
@@ -99,30 +99,13 @@ update msg model =
             ( { model | modal = { target = Nothing } }, Cmd.none )
 
         ChangeSearchQuery value ->
-            let
-                selector =
-                    model.imageSelector
-            in
-            ( { model | imageSelector = { selector | searchQuery = value } }, Cmd.none )
+            ( alterImageSelector (\s -> { s | searchQuery = value }) model, Cmd.none )
 
         AddImage options ->
-            let
-                selector =
-                    model.imageSelector
-            in
-            ( { model
-                | imageSelector =
-                    { selector | availableImages = selector.availableImages ++ [ options ] }
-              }
-            , Cmd.none
-            )
+            ( alterImageSelector (\s -> { s | availableImages = s.availableImages ++ [ options ] }) model, Cmd.none )
 
         SelectImage selected ->
-            let
-                selector =
-                    model.imageSelector
-            in
-            ( { model | imageSelector = { selector | selectedImage = Just selected } }, Cmd.none )
+            ( alterImageSelector (\s -> { s | selectedImage = Just selected }) model, Cmd.none )
 
 
 view : Model -> Html Msg
