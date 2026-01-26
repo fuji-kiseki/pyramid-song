@@ -18,10 +18,8 @@
             [
               elm
               elm-format
-              entr
-              nixfmt
-              busybox
               tailwindcss_4
+              nixfmt
             ];
         };
       });
