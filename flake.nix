@@ -50,6 +50,31 @@
             cp -r index.html dist $out/
           '';
         };
+
+        dev = pkgs.writeShellApplication {
+          name = "dev";
+          runtimeInputs = with pkgs; [
+            elmPackages.elm
+            tailwindcss_4
+            watchexec
+            serve
+          ];
+
+          text = ''
+            trap 'pkill -P $$' EXIT
+            mkdir -p result-dev
+
+            cp ./index.html ./result-dev/
+            serve -n -d ./result-dev &
+            watchexec -e css,elm -- tailwindcss -i ./src/styles.css -o ./result-dev/dist/styles.css &
+            watchexec -e elm -- elm make src/Main.elm --output=result-dev/dist/Main.js
+          '';
+        };
+      });
+
+      apps = eachSystem (pkgs: {
+        type = "app";
+        program = "${self.packages.${pkgs.system}.dev}/bin/dev";
       });
 
       formatter = eachSystem (pkgs: pkgs.nixfmt-tree);
