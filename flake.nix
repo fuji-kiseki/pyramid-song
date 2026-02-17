@@ -56,23 +56,6 @@
             cp -r dist/* $out/
           '';
         };
-
-        dev = pkgs.writeShellApplication {
-          name = "dev";
-          runtimeInputs = with pkgs; [
-            elmPackages.elm
-            nodejs
-          ];
-
-          text = ''
-            pnpm dev
-          '';
-        };
-      });
-
-      apps = eachSystem (pkgs: {
-        type = "app";
-        program = "${self.packages.${pkgs.system}.dev}/bin/dev";
       });
 
       formatter = eachSystem (pkgs: pkgs.nixfmt-tree);
