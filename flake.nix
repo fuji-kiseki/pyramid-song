@@ -12,15 +12,13 @@
     {
       devShells = eachSystem (pkgs: {
         default = pkgs.mkShell {
-          buildInputs =
-            with pkgs;
-            with elmPackages;
-            [
-              elm
-              elm-format
-              tailwindcss_4
-              nixfmt
-            ];
+          packages = with pkgs; [
+            nixfmt
+            elmPackages.elm
+            elmPackages.elm-format
+            nodejs_latest
+            pnpm
+          ];
         };
       });
 
@@ -31,23 +29,31 @@
 
           nativeBuildInputs = with pkgs; [
             elmPackages.elm
-            tailwindcss_4
+            nodejs_latest
+            (pnpm.override { nodejs = nodejs_latest; })
+            pnpmConfigHook
           ];
 
-          configurePhase = pkgs.elmPackages.fetchElmDeps {
+          pnpmDeps = pkgs.fetchPnpmDeps {
+            pname = "pyramid-song";
+            src = self;
+            fetcherVersion = 1;
+            hash = "sha256-tc0rAEFJBZaIpZmNUBJelT5MSLNitMtEGDkviLcRZPw=";
+          };
+
+          preConfigure = pkgs.elmPackages.fetchElmDeps {
             elmPackages = import ./elm-srcs.nix;
             elmVersion = "0.19.1";
             registryDat = ./registry.dat;
           };
 
           buildPhase = ''
-            elm make src/Main.elm --output=dist/Main.js --optimize
-            tailwindcss -i ./src/styles.css -o ./dist/styles.css --minify
+            pnpm build
           '';
 
           installPhase = ''
             mkdir -p $out
-            cp -r index.html dist $out/
+            cp -r dist/* $out/
           '';
         };
 
@@ -55,19 +61,11 @@
           name = "dev";
           runtimeInputs = with pkgs; [
             elmPackages.elm
-            tailwindcss_4
-            watchexec
-            serve
+            nodejs
           ];
 
           text = ''
-            trap 'pkill -P $$' EXIT
-            mkdir -p result-dev
-
-            cp ./index.html ./result-dev/
-            serve -n -d ./result-dev &
-            watchexec -e css,elm -- tailwindcss -i ./src/styles.css -o ./result-dev/dist/styles.css &
-            watchexec -e elm -- elm make src/Main.elm --output=result-dev/dist/Main.js
+            pnpm dev
           '';
         };
       });

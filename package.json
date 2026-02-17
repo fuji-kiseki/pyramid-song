@@ -1,0 +1,20 @@
+{
+  "name": "pyramid-song",
+  "type": "module",
+  "license": "BSD-3-Clause",
+  "private": true,
+  "packageManager": "pnpm@10.28.0",
+  "scripts": {
+    "dev": "parcel -p 4443 src/index.html",
+    "build": "parcel build src/index.html",
+    "clean": "rm -rf dist .parcel-cache"
+  },
+  "devDependencies": {
+    "@parcel/transformer-elm": "2.16.4",
+    "@tailwindcss/postcss": "^4.1.18",
+    "elm": "0.19.1-6",
+    "parcel": "^2.16.4",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.18"
+  }
+}
