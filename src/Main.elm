@@ -14,6 +14,7 @@ import Svg exposing (circle, path, svg)
 import Svg.Attributes exposing (cx, cy, d, fill, r, stroke, strokeLinecap, strokeLinejoin, strokeWidth, viewBox)
 import Task exposing (..)
 import Views.Modal exposing (viewModal)
+import Views.Switch as ImagePicker
 
 
 main : Program () Model Msg
@@ -65,6 +66,7 @@ type Msg
     | ChangeSearchQuery String
     | AddImage Image.ImageOption
     | SelectImage String
+    | ChangeCategory Image.ImageCategory
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -107,77 +109,90 @@ update msg model =
         SelectImage selected ->
             ( alterImageSelector (\s -> { s | selectedImage = Just selected }) model, Cmd.none )
 
+        ChangeCategory category ->
+            ( alterImageSelector (\s -> { s | selectedCategory = category }) model, Cmd.none )
+
 
 view : Model -> Html Msg
-view model =
+view { modal, images, imageSelector } =
     div []
         [ Keyed.node "ul"
             [ class "grid grid-cols-3 grid-rows-3 gap-1 max-w-fit m-auto" ]
-            (model.images
+            (images
                 |> Dict.toList
                 |> List.map (\( index, imageState ) -> viewKeyedImage index imageState)
             )
-        , case model.modal.target of
+        , case modal.target of
             Just index ->
-                let
-                    inputId =
-                        "file-input"
-                in
                 viewModal
                     { onClose = CloseModal
                     , onConfirm =
                         Maybe.andThen
                             (\selectedId ->
-                                model.imageSelector.availableImages
+                                imageSelector.availableImages
                                     |> List.filter (\image -> image.id == selectedId)
                                     |> List.head
                             )
-                            model.imageSelector.selectedImage
+                            imageSelector.selectedImage
                             |> Maybe.map (\{ id, url } -> ImageLoaded index { name = id, url = url })
                     }
-                    [ input
-                        [ type_ "file"
-                        , id inputId
-                        , multiple False
-                        , accept "image/*"
-                        , value ""
-                        , on "change" (Decode.map GotFiles filesDecoder)
-                        , class "hidden"
+                    [ ImagePicker.switch
+                        [ ImagePicker.Control "files" Image.Upload ChangeCategory
+                            |> ImagePicker.viewControl imageSelector.selectedCategory
+                        , ImagePicker.Control "Url" Image.Url ChangeCategory
+                            |> ImagePicker.viewControl imageSelector.selectedCategory
                         ]
-                        []
-                    , label
-                        [ class "block w-fit cursor-pointer"
-                        , for inputId
-                        ]
-                        [ imagePlusIcon [ Svg.Attributes.class "h-6 w-6" ] ]
-                    , input
-                        [ type_ "text"
-                        , name "url"
-                        , placeholder "url"
-                        , value model.imageSelector.searchQuery
-                        , on "keydown"
-                            (Decode.field "key" Decode.string
-                                |> Decode.andThen
-                                    (\key ->
-                                        if key == "Enter" then
-                                            -- TODO: validate url
-                                            Decode.succeed
-                                                (AddImage
-                                                    { id = model.imageSelector.searchQuery
-                                                    , filename = model.imageSelector.searchQuery
-                                                    , category = Image.Upload
-                                                    , url = model.imageSelector.searchQuery
-                                                    }
-                                                )
+                    , case imageSelector.selectedCategory of
+                        Image.Upload ->
+                            div []
+                                [ input
+                                    [ type_ "file"
+                                    , id "file-input"
+                                    , multiple False
+                                    , accept "image/*"
+                                    , value ""
+                                    , on "change" (Decode.map GotFiles filesDecoder)
+                                    , class "hidden"
+                                    ]
+                                    []
+                                , label
+                                    [ class "block w-fit cursor-pointer"
+                                    , for "file-input"
+                                    ]
+                                    [ imagePlusIcon [ Svg.Attributes.class "h-6 w-6" ] ]
+                                ]
 
-                                        else
-                                            Decode.fail ""
-                                    )
-                            )
-                        , onInput ChangeSearchQuery
-                        , class "border border-gray-500"
-                        ]
-                        []
+                        Image.Url ->
+                            div []
+                                [ input
+                                    [ type_ "text"
+                                    , name "url"
+                                    , placeholder "url"
+                                    , value imageSelector.searchQuery
+                                    , on "keydown"
+                                        (Decode.field "key" Decode.string
+                                            |> Decode.andThen
+                                                (\key ->
+                                                    if key == "Enter" then
+                                                        -- TODO: validate url
+                                                        Decode.succeed
+                                                            (AddImage
+                                                                { id = imageSelector.searchQuery
+                                                                , filename = imageSelector.searchQuery
+                                                                , category = Image.Upload
+                                                                , url = imageSelector.searchQuery
+                                                                }
+                                                            )
+
+                                                    else
+                                                        Decode.fail ""
+                                                )
+                                        )
+                                    , onInput ChangeSearchQuery
+                                    , class "border border-gray-500"
+                                    ]
+                                    []
+                                ]
                     , div
                         [ class "flex flex-wrap justify-center gap-2" ]
                         (List.map
@@ -188,7 +203,7 @@ view model =
                                     , src i.url
                                     , onClick (SelectImage i.id)
                                     , class "rounded-md"
-                                    , model.imageSelector.selectedImage
+                                    , imageSelector.selectedImage
                                         |> Maybe.map
                                             (\id ->
                                                 if id == i.id then
@@ -201,7 +216,7 @@ view model =
                                     ]
                                     []
                             )
-                            model.imageSelector.availableImages
+                            imageSelector.availableImages
                         )
                     ]
 
