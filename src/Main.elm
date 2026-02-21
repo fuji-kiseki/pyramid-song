@@ -10,11 +10,12 @@ import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy2)
 import Image exposing (Image, ImageSelector, ImageState, alterImageSelector, setImage)
 import Json.Decode as Decode
-import Svg exposing (circle, path, svg)
-import Svg.Attributes exposing (cx, cy, d, fill, r, stroke, strokeLinecap, strokeLinejoin, strokeWidth, viewBox)
+import Svg.Attributes
 import Task exposing (..)
+import Views.Icons.ImagePlus exposing (imagePlusIcon)
 import Views.Modal exposing (viewModal)
 import Views.Switch as ImagePicker
+import Views.Upload exposing (viewUpload)
 
 
 main : Program () Model Msg
@@ -136,87 +137,74 @@ view { modal, images, imageSelector } =
                             imageSelector.selectedImage
                             |> Maybe.map (\{ id, url } -> ImageLoaded index { name = id, url = url })
                     }
-                    [ ImagePicker.switch
-                        [ ImagePicker.Control "files" Image.Upload ChangeCategory
-                            |> ImagePicker.viewControl imageSelector.selectedCategory
-                        , ImagePicker.Control "Url" Image.Url ChangeCategory
-                            |> ImagePicker.viewControl imageSelector.selectedCategory
-                        ]
-                    , case imageSelector.selectedCategory of
-                        Image.Upload ->
-                            div []
-                                [ input
-                                    [ type_ "file"
-                                    , id "file-input"
-                                    , multiple False
-                                    , accept "image/*"
-                                    , value ""
-                                    , on "change" (Decode.map GotFiles filesDecoder)
-                                    , class "hidden"
-                                    ]
-                                    []
-                                , label
-                                    [ class "block w-fit cursor-pointer"
-                                    , for "file-input"
-                                    ]
-                                    [ imagePlusIcon [ Svg.Attributes.class "h-6 w-6" ] ]
-                                ]
-
-                        Image.Url ->
-                            div []
-                                [ input
-                                    [ type_ "text"
-                                    , name "url"
-                                    , placeholder "url"
-                                    , value imageSelector.searchQuery
-                                    , on "keydown"
-                                        (Decode.field "key" Decode.string
-                                            |> Decode.andThen
-                                                (\key ->
-                                                    if key == "Enter" then
-                                                        -- TODO: validate url
-                                                        Decode.succeed
-                                                            (AddImage
-                                                                { id = imageSelector.searchQuery
-                                                                , filename = imageSelector.searchQuery
-                                                                , category = Image.Upload
-                                                                , url = imageSelector.searchQuery
-                                                                }
-                                                            )
-
-                                                    else
-                                                        Decode.fail ""
-                                                )
-                                        )
-                                    , onInput ChangeSearchQuery
-                                    , class "border border-gray-500"
-                                    ]
-                                    []
-                                ]
-                    , div
-                        [ class "flex flex-wrap justify-center gap-2" ]
-                        (List.map
-                            (\i ->
-                                img
-                                    [ width 150
-                                    , height 150
-                                    , src i.url
-                                    , onClick (SelectImage i.id)
-                                    , class "rounded-md"
-                                    , imageSelector.selectedImage
-                                        |> Maybe.map
-                                            (\id ->
-                                                if id == i.id then
-                                                    class "ring-4"
+                    [ header [ class "flex justify-between" ]
+                        [ ImagePicker.switch
+                            [ ImagePicker.Control "files" Image.Upload ChangeCategory
+                                |> ImagePicker.viewControl imageSelector.selectedCategory
+                            , ImagePicker.Control "Url" Image.Url ChangeCategory
+                                |> ImagePicker.viewControl imageSelector.selectedCategory
+                            ]
+                        , div [ class "flex w-fit px-2 border border-gray-200 rounded-sm" ]
+                            [ input
+                                [ type_ "text"
+                                , name "url"
+                                , placeholder "url"
+                                , value imageSelector.searchQuery
+                                , on "keydown"
+                                    (Decode.field "key" Decode.string
+                                        |> Decode.andThen
+                                            (\key ->
+                                                if key == "Enter" then
+                                                    Decode.succeed
+                                                        (AddImage
+                                                            { id = imageSelector.searchQuery
+                                                            , filename = imageSelector.searchQuery
+                                                            , category = Image.Upload
+                                                            , url = imageSelector.searchQuery
+                                                            }
+                                                        )
 
                                                 else
-                                                    class "hover:ring-2"
+                                                    Decode.fail ""
                                             )
-                                        |> Maybe.withDefault (class "hover:ring-2")
-                                    ]
-                                    []
-                            )
-                            imageSelector.availableImages
+                                    )
+                                , onInput ChangeSearchQuery
+                                , class "outline-none caret-gray-600"
+                                ]
+                                []
+                            ]
+                        ]
+                    , div
+                        [ class "flex flex-wrap gap-2 mt-4" ]
+                        ((case imageSelector.selectedCategory of
+                            Image.Upload ->
+                                viewUpload GotFiles
+
+                            _ ->
+                                text ""
+                         )
+                            :: List.map
+                                (\i ->
+                                    img
+                                        [ src i.url
+                                        , onClick (SelectImage i.id)
+                                        , class "rounded-md h-50 aspect-square object-cover"
+                                        , class
+                                            (imageSelector.selectedImage
+                                                |> Maybe.map
+                                                    (\id ->
+                                                        if id == i.id then
+                                                            "ring"
+
+                                                        else
+                                                            ""
+                                                    )
+                                                |> Maybe.withDefault ""
+                                            )
+                                        ]
+                                        []
+                                )
+                                imageSelector.availableImages
                         )
                     ]
 
@@ -243,27 +231,4 @@ viewImage index image =
                 Image.Loaded { url, name } ->
                     img [ src url, alt name, draggable "false", class "object-cover w-full h-full block" ] []
             ]
-        ]
-
-
-filesDecoder : Decode.Decoder (List File)
-filesDecoder =
-    Decode.at [ "target", "files" ] (Decode.list File.decoder)
-
-
-imagePlusIcon : List (Svg.Attribute msg) -> Html msg
-imagePlusIcon extraAttrs =
-    svg
-        ([ viewBox "0 0 24 24"
-         , fill "none"
-         , stroke "currentColor"
-         , strokeWidth "2"
-         , strokeLinecap "round"
-         , strokeLinejoin "round"
-         ]
-            ++ extraAttrs
-        )
-        [ path [ d "M16 5h6m-3-3v6m2 3.5V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7.5" ] []
-        , path [ d "m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" ] []
-        , circle [ cx "9", cy "9", r "2" ] []
         ]
