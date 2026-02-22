@@ -177,39 +177,37 @@ view { modal, images, imageSelector } =
                                 ]
                             ]
                         ]
-                    , div [ class "px-4" ]
-                        [ viewGrid
-                            ((case imageSelector.selectedCategory of
-                                Image.Upload ->
-                                    viewUpload GotFiles
+                    , viewGrid
+                        ((case imageSelector.selectedCategory of
+                            Image.Upload ->
+                                viewUpload GotFiles
 
-                                _ ->
-                                    text ""
-                             )
-                                :: List.map
-                                    (\i ->
-                                        img
-                                            [ src i.url
-                                            , onClick (SelectImage i.id)
-                                            , class "rounded-md w-full aspect-square object-cover"
-                                            , class
-                                                (imageSelector.selectedImage
-                                                    |> Maybe.map
-                                                        (\id ->
-                                                            if id == i.id then
-                                                                "ring"
+                            _ ->
+                                text ""
+                         )
+                            :: List.map
+                                (\i ->
+                                    img
+                                        [ src i.url
+                                        , onClick (SelectImage i.id)
+                                        , class "rounded-md w-full aspect-square object-cover"
+                                        , class
+                                            (imageSelector.selectedImage
+                                                |> Maybe.map
+                                                    (\id ->
+                                                        if id == i.id then
+                                                            "ring"
 
-                                                            else
-                                                                ""
-                                                        )
-                                                    |> Maybe.withDefault ""
-                                                )
-                                            ]
-                                            []
-                                    )
-                                    imageSelector.availableImages
-                            )
-                        ]
+                                                        else
+                                                            ""
+                                                    )
+                                                |> Maybe.withDefault ""
+                                            )
+                                        ]
+                                        []
+                                )
+                                imageSelector.availableImages
+                        )
                     ]
 
             Nothing ->
