@@ -17,7 +17,7 @@ viewModal { onClose, onConfirm } content =
         [ div
             [ class "flex flex-col justify-center w-3xl bg-white border border-gray-200 rounded-xl overflow-hidden max-w-9/10 max-h-8/10" ]
             [ div [ class "overflow-auto" ] content
-            , footer [ class "flex justify-between bg-gray-50 border-t border-gray-200 p-4" ]
+            , footer [ class "flex justify-between bg-gray-50/90 border-t border-gray-200 p-4" ]
                 [ button [ baseBtnStyle, closeBtnStyle, onClick onClose ] [ text "Cancel" ]
                 , button
                     (baseBtnStyle
@@ -37,7 +37,7 @@ viewModal { onClose, onConfirm } content =
 
 viewModalHeader : List (Html msg) -> Html msg
 viewModalHeader content =
-    header [ class "sticky top-0 p-4 bg-white" ] content
+    header [ class "sticky top-0 p-4 bg-gray-50/90 backdrop-blur-sm border-b border-gray-200" ] content
 
 
 baseBtnStyle : Attribute msg

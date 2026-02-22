@@ -146,7 +146,7 @@ view { modal, images, imageSelector } =
                                 , ImagePicker.Control "Url" Image.Url ChangeCategory
                                     |> ImagePicker.viewControl imageSelector.selectedCategory
                                 ]
-                            , div [ class "flex w-fit px-2 border border-gray-200 rounded-sm" ]
+                            , div [ class "flex w-fit px-2 bg-white border border-gray-200 rounded-sm" ]
                                 [ input
                                     [ type_ "text"
                                     , name "url"

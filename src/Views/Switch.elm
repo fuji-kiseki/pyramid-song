@@ -7,7 +7,7 @@ import Html.Events exposing (onClick)
 
 switch : List (Html msg) -> Html msg
 switch content =
-    div [ class "flex w-fit p-0.5 border border-gray-200 rounded-sm" ] content
+    div [ class "flex w-fit p-0.5 bg-white border border-gray-200 rounded-sm" ] content
 
 
 type alias Control value action =
@@ -23,7 +23,7 @@ viewControl selected ctl =
         [ onClick (ctl.action ctl.value)
         , classList
             [ ( "rounded-xs px-2 py-1 pointer cursor-pointer", True )
-            , ( "bg-gray-100", selected == ctl.value )
+            , ( "bg-gray-200", selected == ctl.value )
             ]
         ]
         [ text ctl.label ]
