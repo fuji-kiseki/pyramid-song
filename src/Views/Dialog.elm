@@ -11,28 +11,32 @@ type alias ModalConfig msg =
     }
 
 
-viewDialog : ModalConfig msg -> List (Html msg) -> Html msg
-viewDialog { onClose, onConfirm } content =
-    div [ class "fixed inset-0 flex items-center justify-center" ]
-        [ div
-            [ class "flex flex-col justify-center w-3xl bg-white border border-gray-200 rounded-xl overflow-hidden max-w-9/10 max-h-8/10" ]
-            [ div [ class "overflow-auto" ] content
-            , footer [ class "flex justify-between bg-gray-50/90 border-t border-gray-200 p-4" ]
-                [ button [ baseBtnStyle, closeBtnStyle, onClick onClose ] [ text "Cancel" ]
-                , button
-                    (baseBtnStyle
-                        :: (case onConfirm of
-                                Nothing ->
-                                    [ confirmBtnStyle False ]
+viewDialog : ModalConfig msg -> Bool -> List (Html msg) -> Html msg
+viewDialog { onClose, onConfirm } open content =
+    if open then
+        div [ class "fixed inset-0 flex items-center justify-center" ]
+            [ div
+                [ class "flex flex-col justify-center w-3xl bg-white border border-gray-200 rounded-xl overflow-hidden max-w-9/10 max-h-8/10" ]
+                [ div [ class "overflow-auto" ] content
+                , footer [ class "flex justify-between bg-gray-50/90 border-t border-gray-200 p-4" ]
+                    [ button [ baseBtnStyle, closeBtnStyle, onClick onClose ] [ text "Cancel" ]
+                    , button
+                        (baseBtnStyle
+                            :: (case onConfirm of
+                                    Nothing ->
+                                        [ confirmBtnStyle False ]
 
-                                Just msg ->
-                                    [ confirmBtnStyle True, onClick msg ]
-                           )
-                    )
-                    [ text "confirm" ]
+                                    Just msg ->
+                                        [ confirmBtnStyle True, onClick msg ]
+                               )
+                        )
+                        [ text "confirm" ]
+                    ]
                 ]
             ]
-        ]
+
+    else
+        text ""
 
 
 viewHeader : List (Html msg) -> Html msg
