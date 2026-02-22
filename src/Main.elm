@@ -12,9 +12,9 @@ import Image exposing (Image, ImageSelector, ImageState, alterImageSelector, set
 import Json.Decode as Decode
 import Svg.Attributes
 import Task exposing (..)
+import Views.Dialog exposing (viewModal, viewModalHeader)
 import Views.Grid exposing (viewGrid)
 import Views.Icons.ImagePlus exposing (imagePlusIcon)
-import Views.Modal exposing (viewModal, viewModalHeader)
 import Views.Switch as ImagePicker
 import Views.Upload exposing (viewUpload)
 

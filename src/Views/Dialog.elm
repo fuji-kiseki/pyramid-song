@@ -1,4 +1,4 @@
-module Views.Modal exposing (ModalConfig, viewModal, viewModalHeader)
+module Views.Dialog exposing (ModalConfig, viewModal, viewModalHeader)
 
 import Html exposing (..)
 import Html.Attributes exposing (class)
