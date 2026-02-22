@@ -12,8 +12,9 @@ import Image exposing (Image, ImageSelector, ImageState, alterImageSelector, set
 import Json.Decode as Decode
 import Svg.Attributes
 import Task exposing (..)
+import Views.Grid exposing (viewGrid)
 import Views.Icons.ImagePlus exposing (imagePlusIcon)
-import Views.Modal exposing (viewModal)
+import Views.Modal exposing (viewModal, viewModalHeader)
 import Views.Switch as ImagePicker
 import Views.Upload exposing (viewUpload)
 
@@ -137,75 +138,78 @@ view { modal, images, imageSelector } =
                             imageSelector.selectedImage
                             |> Maybe.map (\{ id, url } -> ImageLoaded index { name = id, url = url })
                     }
-                    [ header [ class "flex justify-between" ]
-                        [ ImagePicker.switch
-                            [ ImagePicker.Control "files" Image.Upload ChangeCategory
-                                |> ImagePicker.viewControl imageSelector.selectedCategory
-                            , ImagePicker.Control "Url" Image.Url ChangeCategory
-                                |> ImagePicker.viewControl imageSelector.selectedCategory
-                            ]
-                        , div [ class "flex w-fit px-2 border border-gray-200 rounded-sm" ]
-                            [ input
-                                [ type_ "text"
-                                , name "url"
-                                , placeholder "url"
-                                , value imageSelector.searchQuery
-                                , on "keydown"
-                                    (Decode.field "key" Decode.string
-                                        |> Decode.andThen
-                                            (\key ->
-                                                if key == "Enter" then
-                                                    Decode.succeed
-                                                        (AddImage
-                                                            { id = imageSelector.searchQuery
-                                                            , filename = imageSelector.searchQuery
-                                                            , category = Image.Upload
-                                                            , url = imageSelector.searchQuery
-                                                            }
-                                                        )
-
-                                                else
-                                                    Decode.fail ""
-                                            )
-                                    )
-                                , onInput ChangeSearchQuery
-                                , class "outline-none caret-gray-600"
+                    [ viewModalHeader
+                        [ div [ class "flex justify-between" ]
+                            [ ImagePicker.switch
+                                [ ImagePicker.Control "files" Image.Upload ChangeCategory
+                                    |> ImagePicker.viewControl imageSelector.selectedCategory
+                                , ImagePicker.Control "Url" Image.Url ChangeCategory
+                                    |> ImagePicker.viewControl imageSelector.selectedCategory
                                 ]
-                                []
+                            , div [ class "flex w-fit px-2 border border-gray-200 rounded-sm" ]
+                                [ input
+                                    [ type_ "text"
+                                    , name "url"
+                                    , placeholder "url"
+                                    , value imageSelector.searchQuery
+                                    , on "keydown"
+                                        (Decode.field "key" Decode.string
+                                            |> Decode.andThen
+                                                (\key ->
+                                                    if key == "Enter" then
+                                                        Decode.succeed
+                                                            (AddImage
+                                                                { id = imageSelector.searchQuery
+                                                                , filename = imageSelector.searchQuery
+                                                                , category = Image.Upload
+                                                                , url = imageSelector.searchQuery
+                                                                }
+                                                            )
+
+                                                    else
+                                                        Decode.fail ""
+                                                )
+                                        )
+                                    , onInput ChangeSearchQuery
+                                    , class "outline-none caret-gray-600"
+                                    ]
+                                    []
+                                ]
                             ]
                         ]
-                    , div
-                        [ class "flex flex-wrap gap-2 mt-4" ]
-                        ((case imageSelector.selectedCategory of
-                            Image.Upload ->
-                                viewUpload GotFiles
+                    , div [ class "px-4" ]
+                        [ viewGrid
+                            ((case imageSelector.selectedCategory of
+                                Image.Upload ->
+                                    viewUpload GotFiles
 
-                            _ ->
-                                text ""
-                         )
-                            :: List.map
-                                (\i ->
-                                    img
-                                        [ src i.url
-                                        , onClick (SelectImage i.id)
-                                        , class "rounded-md h-50 aspect-square object-cover"
-                                        , class
-                                            (imageSelector.selectedImage
-                                                |> Maybe.map
-                                                    (\id ->
-                                                        if id == i.id then
-                                                            "ring"
+                                _ ->
+                                    text ""
+                             )
+                                :: List.map
+                                    (\i ->
+                                        img
+                                            [ src i.url
+                                            , onClick (SelectImage i.id)
+                                            , class "rounded-md w-full aspect-square object-cover"
+                                            , class
+                                                (imageSelector.selectedImage
+                                                    |> Maybe.map
+                                                        (\id ->
+                                                            if id == i.id then
+                                                                "ring"
 
-                                                        else
-                                                            ""
-                                                    )
-                                                |> Maybe.withDefault ""
-                                            )
-                                        ]
-                                        []
-                                )
-                                imageSelector.availableImages
-                        )
+                                                            else
+                                                                ""
+                                                        )
+                                                    |> Maybe.withDefault ""
+                                                )
+                                            ]
+                                            []
+                                    )
+                                    imageSelector.availableImages
+                            )
+                        ]
                     ]
 
             Nothing ->

@@ -13,7 +13,7 @@ viewUpload : (List File -> msg) -> Html msg
 viewUpload msg =
     label
         [ attribute "aria-label" "Upload image"
-        , class "h-50 aspect-square flex flex-col items-center justify-center rounded-md"
+        , class "h-full aspect-square flex flex-col items-center justify-center rounded-md"
         , class "border border-gray-200 border-dashed cursor-pointer group hover:border-gray-400"
         ]
         [ input
