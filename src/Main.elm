@@ -194,16 +194,11 @@ view { modal, images, imageSelector } =
                                 , onClick (SelectImage i.id)
                                 , class "rounded-md w-full aspect-square object-cover"
                                 , class
-                                    (imageSelector.selectedImage
-                                        |> Maybe.map
-                                            (\id ->
-                                                if id == i.id then
-                                                    "ring"
+                                    (if imageSelector.selectedImage == Just i.id then
+                                        "ring"
 
-                                                else
-                                                    ""
-                                            )
-                                        |> Maybe.withDefault ""
+                                     else
+                                        ""
                                     )
                                 ]
                                 []
