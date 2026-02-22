@@ -1,4 +1,4 @@
-module Views.Dialog exposing (ModalConfig, viewModal, viewModalHeader)
+module Views.Dialog exposing (ModalConfig, viewDialog, viewHeader)
 
 import Html exposing (..)
 import Html.Attributes exposing (class)
@@ -11,8 +11,8 @@ type alias ModalConfig msg =
     }
 
 
-viewModal : ModalConfig msg -> List (Html msg) -> Html msg
-viewModal { onClose, onConfirm } content =
+viewDialog : ModalConfig msg -> List (Html msg) -> Html msg
+viewDialog { onClose, onConfirm } content =
     div [ class "fixed inset-0 flex items-center justify-center" ]
         [ div
             [ class "flex flex-col justify-center w-3xl bg-white border border-gray-200 rounded-xl overflow-hidden max-w-9/10 max-h-8/10" ]
@@ -35,8 +35,8 @@ viewModal { onClose, onConfirm } content =
         ]
 
 
-viewModalHeader : List (Html msg) -> Html msg
-viewModalHeader content =
+viewHeader : List (Html msg) -> Html msg
+viewHeader content =
     header [ class "sticky top-0 p-4 bg-gray-50/90 backdrop-blur-sm border-b border-gray-200" ] content
 
 

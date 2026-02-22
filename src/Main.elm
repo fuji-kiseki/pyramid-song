@@ -12,7 +12,7 @@ import Image exposing (Image, ImageSelector, ImageState, alterImageSelector, set
 import Json.Decode as Decode
 import Svg.Attributes
 import Task exposing (..)
-import Views.Dialog exposing (viewModal, viewModalHeader)
+import Views.Dialog as Dialog
 import Views.Grid exposing (viewGrid)
 import Views.Icons.ImagePlus exposing (imagePlusIcon)
 import Views.Switch as ImagePicker
@@ -126,7 +126,7 @@ view { modal, images, imageSelector } =
             )
         , case modal.target of
             Just index ->
-                viewModal
+                Dialog.viewDialog
                     { onClose = CloseModal
                     , onConfirm =
                         Maybe.andThen
@@ -138,7 +138,7 @@ view { modal, images, imageSelector } =
                             imageSelector.selectedImage
                             |> Maybe.map (\{ id, url } -> ImageLoaded index { name = id, url = url })
                     }
-                    [ viewModalHeader
+                    [ Dialog.viewHeader
                         [ div [ class "flex justify-between" ]
                             [ ImagePicker.switch
                                 [ ImagePicker.Control "files" Image.Upload ChangeCategory
