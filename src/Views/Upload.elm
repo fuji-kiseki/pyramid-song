@@ -6,7 +6,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (on)
 import Json.Decode as D
 import Svg.Attributes
-import Views.Icons.ImagePlus exposing (imagePlusIcon)
+import Views.Icons exposing (viewImagePlus)
 
 
 viewUpload : (List File -> msg) -> Html msg
@@ -24,7 +24,7 @@ viewUpload msg =
             , class "hidden"
             ]
             []
-        , imagePlusIcon
+        , viewImagePlus
             [ Svg.Attributes.class "h-6 w-6 text-gray-600 group-hover:text-black"
             ]
         , span [ class "text-gray-600  text-xs pt-2 group-hover:text-black" ]

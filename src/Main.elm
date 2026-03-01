@@ -14,7 +14,7 @@ import Svg.Attributes
 import Task exposing (..)
 import Views.Dialog as Dialog
 import Views.Grid exposing (viewGrid)
-import Views.Icons.ImagePlus exposing (imagePlusIcon)
+import Views.Icons exposing (viewImagePlus)
 import Views.Switch as ImagePicker
 import Views.Upload exposing (viewUpload)
 
@@ -222,7 +222,7 @@ viewImage index image =
             ]
             [ case image of
                 Image.Empty ->
-                    imagePlusIcon [ Svg.Attributes.class "h-6 w-6" ]
+                    viewImagePlus [ Svg.Attributes.class "h-6 w-6" ]
 
                 Image.Loaded { url, name } ->
                     img [ src url, alt name, draggable "false", class "object-cover w-full h-full block" ] []

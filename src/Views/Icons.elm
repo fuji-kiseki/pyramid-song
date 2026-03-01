@@ -1,12 +1,12 @@
-module Views.Icons.ImagePlus exposing (imagePlusIcon)
+module Views.Icons exposing (..)
 
 import Html exposing (Html)
 import Svg exposing (Attribute, circle, path, svg)
 import Svg.Attributes exposing (cx, cy, d, fill, r, stroke, strokeLinecap, strokeLinejoin, strokeWidth, viewBox)
 
 
-imagePlusIcon : List (Attribute msg) -> Html msg
-imagePlusIcon extraAttrs =
+viewImagePlus : List (Attribute msg) -> Html msg
+viewImagePlus extraAttrs =
     svg
         ([ viewBox "0 0 24 24"
          , fill "none"
