@@ -1,3 +1,4 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
 @layer theme, base, components, utilities;

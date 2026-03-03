@@ -12,8 +12,45 @@
     <script type="module">
       import { Elm } from "./Main.elm";
 
+      const media = window.matchMedia("(prefers-color-scheme: dark)");
+      const storageKey = "theme";
+
+      /** @type {"light" | "dark"} */
+      const systemTheme = media.matches ? "dark" : "light";
+
+      /** @type {string | null} */
+      const storedTheme = localStorage.getItem(storageKey);
+
+      const resolvedTheme =
+        storedTheme === "dark" || storedTheme === "light"
+          ? storedTheme
+          : systemTheme;
+
+      document.documentElement.classList.toggle(
+        "dark",
+        resolvedTheme === "dark",
+      );
+
       const app = Elm.Main.init({
         node: document.getElementById("root"),
+        flags: {
+          systemTheme,
+          storedTheme,
+        },
+      });
+
+      app.ports.applyTheme.subscribe(({ theme, store }) => {
+        document.documentElement.classList.toggle("dark", theme === "dark");
+        localStorage.setItem(storageKey, store);
+      });
+
+      media.addEventListener("change", (e) => {
+        app.ports.systemThemeChanged.send(e.matches ? "dark" : "light");
+      });
+
+      window.addEventListener("storage", (e) => {
+        if (e.key !== storageKey) return;
+        app.ports.storedThemeChanged.send(e.newValue);
       });
     </script>
   </body>

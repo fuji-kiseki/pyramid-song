@@ -10,8 +10,10 @@ import Html.Keyed as Keyed
 import Html.Lazy exposing (lazy2)
 import Image exposing (Image, ImageSelector, ImageState, alterImageSelector, setImage)
 import Json.Decode as Decode
+import Json.Encode as Encode
 import Svg.Attributes
 import Task exposing (..)
+import Theme exposing (StoredTheme, Theme)
 import Views.Dialog as Dialog
 import Views.Grid exposing (viewGrid)
 import Views.Icons exposing (viewImagePlus)
@@ -19,13 +21,18 @@ import Views.Switch as ImagePicker
 import Views.Upload exposing (viewUpload)
 
 
-main : Program () Model Msg
+main : Program Encode.Value Model Msg
 main =
     Browser.element
         { init = init
         , view = view
         , update = update
-        , subscriptions = \_ -> Sub.none
+        , subscriptions =
+            \_ ->
+                Theme.subscriptions
+                    { onSystemThemeChanged = SystemThemeChanged
+                    , onStoredThemeChanged = StoredThemeChanged
+                    }
         }
 
 
@@ -33,6 +40,7 @@ type alias Model =
     { images : Dict Int ImageState
     , modal : { target : Maybe Int }
     , imageSelector : ImageSelector
+    , theme : Theme.Model
     }
 
 
@@ -42,8 +50,12 @@ type alias ImagePreview =
     }
 
 
-init : () -> ( Model, Cmd Msg )
-init _ =
+init : Encode.Value -> ( Model, Cmd Msg )
+init flags =
+    let
+        theme =
+            Theme.fromFlags flags
+    in
     ( { images =
             List.range 0 8
                 |> List.map (\i -> ( i, Image.Empty ))
@@ -55,8 +67,9 @@ init _ =
             , selectedImage = Nothing
             , availableImages = []
             }
+      , theme = theme
       }
-    , Cmd.none
+    , Theme.apply theme.systemTheme <| Maybe.withDefault Theme.Auto theme.storedTheme
     )
 
 
@@ -69,6 +82,9 @@ type Msg
     | AddImage Image.ImageOption
     | SelectImage String
     | ChangeCategory Image.ImageCategory
+    | ToggleColorScheme
+    | SystemThemeChanged Theme
+    | StoredThemeChanged (Maybe StoredTheme)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -114,11 +130,54 @@ update msg model =
         ChangeCategory category ->
             ( alterImageSelector (\s -> { s | selectedCategory = category }) model, Cmd.none )
 
+        ToggleColorScheme ->
+            let
+                storedTheme =
+                    Theme.toggle model.theme
+            in
+            ( { model
+                | theme =
+                    { systemTheme = model.theme.systemTheme
+                    , storedTheme = Just storedTheme
+                    }
+              }
+            , Theme.apply model.theme.systemTheme storedTheme
+            )
+
+        SystemThemeChanged systemTheme ->
+            ( { model
+                | theme =
+                    { storedTheme = model.theme.storedTheme
+                    , systemTheme = systemTheme
+                    }
+              }
+            , Cmd.none
+            )
+
+        StoredThemeChanged storedTheme ->
+            ( { model
+                | theme =
+                    { storedTheme = storedTheme
+                    , systemTheme = model.theme.systemTheme
+                    }
+              }
+            , Cmd.none
+            )
+
 
 view : Model -> Html Msg
-view { modal, images, imageSelector } =
+view { modal, images, imageSelector, theme } =
     div []
-        [ Keyed.node "ul"
+        [ button
+            [ onClick ToggleColorScheme ]
+            [ text <|
+                "to "
+                    ++ (Theme.toggle theme
+                            |> Theme.resolve theme.systemTheme
+                            |> Theme.toString
+                       )
+            ]
+        , Keyed.node "ul"
             [ class "grid grid-cols-3 grid-rows-3 gap-1 max-w-fit m-auto" ]
             (images
                 |> Dict.toList
