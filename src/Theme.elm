@@ -38,7 +38,7 @@ type alias Flags =
 -- Ports
 
 
-port applyTheme : { resolved : String, store : String } -> Cmd msg
+port applyTheme : { theme : String, store : String } -> Cmd msg
 
 
 port systemThemeChanged : (String -> msg) -> Sub msg
@@ -126,7 +126,7 @@ storeValue systemTheme stored =
 apply : Theme -> StoredTheme -> Cmd msg
 apply systemTheme stored =
     applyTheme
-        { resolved = toString (resolve systemTheme stored)
+        { theme = toString (resolve systemTheme stored)
         , store = storeValue systemTheme stored
         }
 
