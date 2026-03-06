@@ -38,7 +38,7 @@
             pname = "pyramid-song";
             src = self;
             fetcherVersion = 1;
-            hash = "sha256-tc0rAEFJBZaIpZmNUBJelT5MSLNitMtEGDkviLcRZPw=";
+            hash = "sha256-r9yPZvUddbN8ljmEjXEzYdhLnBa7dkocalIsZwoeQJg=";
           };
 
           preConfigure = pkgs.elmPackages.fetchElmDeps {
