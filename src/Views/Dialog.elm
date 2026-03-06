@@ -1,8 +1,8 @@
 module Views.Dialog exposing (ModalConfig, viewDialog, viewHeader)
 
 import Html exposing (..)
-import Html.Attributes exposing (class, classList)
-import Html.Events exposing (onClick)
+import Html.Attributes exposing (class)
+import Views.Button as Button exposing (ButtonType(..), viewButton)
 
 
 type alias ModalConfig msg =
@@ -21,17 +21,11 @@ viewDialog { onClose, onConfirm } open content =
                 [ div [ class "overflow-auto" ] content
                 , footer
                     [ class "flex justify-between p-4 border-t border-dn-border-100 bg-dn-background-200/90 backdrop-blur-sm" ]
-                    [ button [ baseBtnStyle, closeBtnStyle, onClick onClose ] [ text "Cancel" ]
-                    , button
-                        (baseBtnStyle
-                            :: (case onConfirm of
-                                    Nothing ->
-                                        [ confirmBtnStyle False ]
-
-                                    Just msg ->
-                                        [ confirmBtnStyle True, onClick msg ]
-                               )
-                        )
+                    [ viewButton Button.Close
+                        (Just onClose)
+                        [ text "Cancel" ]
+                    , viewButton Button.Confirm
+                        onConfirm
                         [ text "Confirm" ]
                     ]
                 ]
@@ -46,25 +40,3 @@ viewHeader content =
     header
         [ class "sticky top-0 p-4 border-b border-dn-border-100 bg-dn-background-200/90 backdrop-blur-sm" ]
         content
-
-
-baseBtnStyle : Attribute msg
-baseBtnStyle =
-    class "px-3 py-2 rounded-md text-sm transition-colors"
-
-
-closeBtnStyle : Attribute msg
-closeBtnStyle =
-    class "cursor-pointer border border-dn-border-100 bg-dn-background-100 text-dn-foreground-200 hover:bg-dn-background-200"
-
-
-confirmBtnStyle : Bool -> Attribute msg
-confirmBtnStyle isActive =
-    classList
-        [ ( "bg-dn-emphasis-100 text-dn-emphasis-foreground hover:bg-dn-emphasis-hover cursor-pointer"
-          , isActive
-          )
-        , ( "bg-dn-background-200 text-dn-foreground-100 cursor-not-allowed"
-          , not isActive
-          )
-        ]
