@@ -2,3 +2,49 @@
 
 @variant dark (&:where(.dark, .dark *));
 @layer theme, base, components, utilities;
+
+@utility scheme-light {
+  color-scheme: light;
+
+  --dn-bg: oklch(100% 0 0);
+  --dn-fg: oklch(9% 0 0);
+}
+
+@utility scheme-dark {
+  color-scheme: dark;
+
+  --dn-bg: oklch(18% 0 0);
+  --dn-fg: oklch(96% 0 0);
+}
+
+@theme inline {
+  /* surfaces */
+  --color-dn-background-100: var(--dn-bg);
+  --color-dn-background-200: oklch(from var(--dn-bg) calc(l - 0.03) c h);
+  --color-dn-background-300: oklch(from var(--dn-bg) calc(l - 0.06) c h);
+
+  /* text */
+  --color-dn-foreground-200: var(--dn-fg);
+  --color-dn-foreground-100: oklch(from var(--dn-fg) l c h / 70%);
+
+  /* muted */
+  --color-dn-muted-200: oklch(from var(--dn-fg) l c h / 55%);
+  --color-dn-muted-100: oklch(from var(--dn-fg) l c h / 35%);
+
+  /* borders */
+  --color-dn-border-100: oklch(from var(--dn-fg) l c h / 18%);
+  --color-dn-border-200: oklch(from var(--dn-fg) l c h / 8%);
+
+  /* interaction (black/white emphasis) */
+  --color-dn-emphasis-100: var(--dn-fg);
+  --color-dn-emphasis-hover: oklch(from var(--dn-fg) l c h / 80%);
+  --color-dn-emphasis-foreground: var(--dn-bg);
+}
+
+:root {
+  @apply scheme-light text-dn-foreground-200 bg-dn-background-200;
+}
+
+.dark {
+  @apply scheme-dark;
+}
