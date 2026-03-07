@@ -44,12 +44,6 @@ type alias Model =
     }
 
 
-type alias ImagePreview =
-    { search : String
-    , images : Dict String ImageState
-    }
-
-
 init : Encode.Value -> ( Model, Cmd Msg )
 init flags =
     let
