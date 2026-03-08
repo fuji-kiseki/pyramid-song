@@ -15,8 +15,8 @@ import Svg.Attributes
 import Task exposing (..)
 import Theme exposing (StoredTheme, Theme)
 import Views.Dialog as Dialog
-import Views.Grid exposing (viewGrid)
 import Views.Icons exposing (viewImagePlus)
+import Views.Image as Image
 import Views.Switch as ImagePicker
 import Views.Upload exposing (viewUpload)
 
@@ -236,31 +236,17 @@ view { modal, images, imageSelector, theme } =
                         ]
                     ]
                 ]
-            , viewGrid
+            , Keyed.ul [ class "grid grid-cols-3 grid-flow-row gap-2 m-4" ]
                 ((case imageSelector.selectedCategory of
                     Image.Upload ->
-                        viewUpload GotFiles
+                        ( "upload", viewUpload GotFiles )
 
                     _ ->
-                        text ""
+                        ( "nothing", text "" )
                  )
-                    :: List.map
-                        (\i ->
-                            img
-                                [ src i.url
-                                , onClick (SelectImage i.id)
-                                , class "rounded-md w-full aspect-square object-cover"
-                                , class
-                                    (if imageSelector.selectedImage == Just i.id then
-                                        "ring"
-
-                                     else
-                                        ""
-                                    )
-                                ]
-                                []
-                        )
+                    :: Image.imageList SelectImage
                         imageSelector.availableImages
+                        imageSelector.selectedImage
                 )
             ]
         ]
