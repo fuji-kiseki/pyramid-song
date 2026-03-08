@@ -59,7 +59,7 @@ init flags =
             { selectedCategory = Image.Upload
             , searchQuery = ""
             , selectedImage = Nothing
-            , availableImages = []
+            , availableImages = Dict.empty
             }
       , theme = theme
       }
@@ -73,7 +73,7 @@ type Msg
     | OpenModal Int
     | CloseModal
     | ChangeSearchQuery String
-    | AddImage Image.ImageOption
+    | UpdateEntry Image.ImageOption
     | SelectImage String
     | ChangeCategory Image.ImageCategory
     | ToggleColorScheme
@@ -85,13 +85,17 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotFiles files ->
+            let
+                _ =
+                    Debug.log "" model.images
+            in
             ( model
             , List.head files
                 |> Maybe.map setImage
                 |> Maybe.map
                     (Task.perform <|
                         \{ name, url } ->
-                            AddImage
+                            UpdateEntry
                                 { id = name
                                 , filename = name
                                 , category = Image.Upload
@@ -115,8 +119,16 @@ update msg model =
         ChangeSearchQuery value ->
             ( alterImageSelector (\s -> { s | searchQuery = value }) model, Cmd.none )
 
-        AddImage options ->
-            ( alterImageSelector (\s -> { s | availableImages = s.availableImages ++ [ options ] }) model, Cmd.none )
+        UpdateEntry options ->
+            ( alterImageSelector
+                (\s ->
+                    { s
+                        | availableImages = Dict.insert options.id options s.availableImages
+                    }
+                )
+                model
+            , Cmd.none
+            )
 
         SelectImage selected ->
             ( alterImageSelector (\s -> { s | selectedImage = Just selected }) model, Cmd.none )
@@ -183,9 +195,7 @@ view { modal, images, imageSelector, theme } =
                 imageSelector.selectedImage
                     |> Maybe.andThen
                         (\selectedId ->
-                            imageSelector.availableImages
-                                |> List.filter (\image -> image.id == selectedId)
-                                |> List.head
+                            Dict.get selectedId imageSelector.availableImages
                         )
                     |> Maybe.map2 (\i { id, url } -> ImageLoaded i { name = id, url = url }) modal.target
             }
@@ -214,7 +224,7 @@ view { modal, images, imageSelector, theme } =
                                         (\key ->
                                             if key == "Enter" then
                                                 Decode.succeed
-                                                    (AddImage
+                                                    (UpdateEntry
                                                         { id = imageSelector.searchQuery
                                                         , filename = imageSelector.searchQuery
                                                         , category = Image.Upload

@@ -1,5 +1,6 @@
 module Views.Image exposing (..)
 
+import Dict exposing (Dict)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -19,14 +20,13 @@ viewImage msg images selected =
 
 imageList :
     (String -> msg)
-    -> List ImageOption
+    -> Dict String ImageOption
     -> Maybe String
     -> List ( String, Html msg )
 imageList msg images selected =
-    List.map
-        (\image ->
-            ( image.id
-            , viewImage (msg image.id) image (selected == Just image.id)
+    images
+        |> Dict.toList
+        |> List.map
+            (\( id, image ) ->
+                ( id, viewImage (msg id) image (selected == Just id) )
             )
-        )
-        images

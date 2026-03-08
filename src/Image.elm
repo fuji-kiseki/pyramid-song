@@ -32,7 +32,7 @@ type alias ImageSelector =
     { selectedCategory : ImageCategory
     , searchQuery : String
     , selectedImage : Maybe String
-    , availableImages : List ImageOption
+    , availableImages : Dict String ImageOption
     }
 
 
