@@ -21,27 +21,36 @@ import Views.Switch as ImagePicker
 import Views.Upload exposing (viewUpload)
 
 
-main : Program Encode.Value Model Msg
-main =
-    Browser.element
-        { init = init
-        , view = view
-        , update = update
-        , subscriptions =
-            \_ ->
-                Theme.subscriptions
-                    { onSystemThemeChanged = SystemThemeChanged
-                    , onStoredThemeChanged = StoredThemeChanged
-                    }
-        }
-
-
 type alias Model =
     { images : Dict Int ImageState
     , modal : { target : Maybe Int }
     , imageSelector : ImageSelector
     , theme : Theme.Model
     }
+
+
+type Msg
+    = GotFiles (List File)
+    | ImageLoaded Int Image
+    | OpenModal Int
+    | CloseModal
+    | ChangeSearchQuery String
+    | UpdateEntry Image.ImageOption
+    | SelectImage String
+    | ChangeCategory Image.ImageCategory
+    | ToggleColorScheme
+    | SystemThemeChanged Theme
+    | StoredThemeChanged (Maybe StoredTheme)
+
+
+main : Program Encode.Value Model Msg
+main =
+    Browser.element
+        { init = init
+        , update = update
+        , subscriptions = subscriptions
+        , view = view
+        }
 
 
 init : Encode.Value -> ( Model, Cmd Msg )
@@ -65,106 +74,6 @@ init flags =
       }
     , Theme.apply theme.systemTheme <| Maybe.withDefault Theme.Auto theme.storedTheme
     )
-
-
-type Msg
-    = GotFiles (List File)
-    | ImageLoaded Int Image
-    | OpenModal Int
-    | CloseModal
-    | ChangeSearchQuery String
-    | UpdateEntry Image.ImageOption
-    | SelectImage String
-    | ChangeCategory Image.ImageCategory
-    | ToggleColorScheme
-    | SystemThemeChanged Theme
-    | StoredThemeChanged (Maybe StoredTheme)
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        GotFiles files ->
-            ( model
-            , List.head files
-                |> Maybe.map setImage
-                |> Maybe.map
-                    (Task.perform <|
-                        \{ name, url } ->
-                            UpdateEntry
-                                { id = name
-                                , filename = name
-                                , category = Image.Upload
-                                , url = url
-                                }
-                    )
-                |> Maybe.withDefault Cmd.none
-            )
-
-        ImageLoaded index image ->
-            ( { model | images = Dict.insert index (Image.Loaded image) model.images, modal = { target = Nothing } }
-            , Cmd.none
-            )
-
-        OpenModal target ->
-            ( { model | modal = { target = Just target } }, Cmd.none )
-
-        CloseModal ->
-            ( { model | modal = { target = Nothing } }, Cmd.none )
-
-        ChangeSearchQuery value ->
-            ( alterImageSelector (\s -> { s | searchQuery = value }) model, Cmd.none )
-
-        UpdateEntry options ->
-            ( alterImageSelector
-                (\s ->
-                    { s
-                        | availableImages = Dict.insert options.id options s.availableImages
-                    }
-                )
-                model
-            , Cmd.none
-            )
-
-        SelectImage selected ->
-            ( alterImageSelector (\s -> { s | selectedImage = Just selected }) model, Cmd.none )
-
-        ChangeCategory category ->
-            ( alterImageSelector (\s -> { s | selectedCategory = category }) model, Cmd.none )
-
-        ToggleColorScheme ->
-            let
-                storedTheme =
-                    Theme.toggle model.theme
-            in
-            ( { model
-                | theme =
-                    { systemTheme = model.theme.systemTheme
-                    , storedTheme = Just storedTheme
-                    }
-              }
-            , Theme.apply model.theme.systemTheme storedTheme
-            )
-
-        SystemThemeChanged systemTheme ->
-            ( { model
-                | theme =
-                    { storedTheme = model.theme.storedTheme
-                    , systemTheme = systemTheme
-                    }
-              }
-            , Cmd.none
-            )
-
-        StoredThemeChanged storedTheme ->
-            ( { model
-                | theme =
-                    { storedTheme = storedTheme
-                    , systemTheme = model.theme.systemTheme
-                    }
-              }
-            , Cmd.none
-            )
 
 
 view : Model -> Html Msg
@@ -256,6 +165,100 @@ view { modal, images, imageSelector, theme } =
                 )
             ]
         ]
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        GotFiles files ->
+            ( model
+            , List.head files
+                |> Maybe.map setImage
+                |> Maybe.map
+                    (Task.perform <|
+                        \{ name, url } ->
+                            UpdateEntry
+                                { id = name
+                                , filename = name
+                                , category = Image.Upload
+                                , url = url
+                                }
+                    )
+                |> Maybe.withDefault Cmd.none
+            )
+
+        ImageLoaded index image ->
+            ( { model | images = Dict.insert index (Image.Loaded image) model.images, modal = { target = Nothing } }
+            , Cmd.none
+            )
+
+        OpenModal target ->
+            ( { model | modal = { target = Just target } }, Cmd.none )
+
+        CloseModal ->
+            ( { model | modal = { target = Nothing } }, Cmd.none )
+
+        ChangeSearchQuery value ->
+            ( alterImageSelector (\s -> { s | searchQuery = value }) model, Cmd.none )
+
+        UpdateEntry options ->
+            ( alterImageSelector
+                (\s ->
+                    { s
+                        | availableImages = Dict.insert options.id options s.availableImages
+                    }
+                )
+                model
+            , Cmd.none
+            )
+
+        SelectImage selected ->
+            ( alterImageSelector (\s -> { s | selectedImage = Just selected }) model, Cmd.none )
+
+        ChangeCategory category ->
+            ( alterImageSelector (\s -> { s | selectedCategory = category }) model, Cmd.none )
+
+        ToggleColorScheme ->
+            let
+                storedTheme =
+                    Theme.toggle model.theme
+            in
+            ( { model
+                | theme =
+                    { systemTheme = model.theme.systemTheme
+                    , storedTheme = Just storedTheme
+                    }
+              }
+            , Theme.apply model.theme.systemTheme storedTheme
+            )
+
+        SystemThemeChanged systemTheme ->
+            ( { model
+                | theme =
+                    { storedTheme = model.theme.storedTheme
+                    , systemTheme = systemTheme
+                    }
+              }
+            , Cmd.none
+            )
+
+        StoredThemeChanged storedTheme ->
+            ( { model
+                | theme =
+                    { storedTheme = storedTheme
+                    , systemTheme = model.theme.systemTheme
+                    }
+              }
+            , Cmd.none
+            )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Theme.subscriptions
+        { onSystemThemeChanged = SystemThemeChanged
+        , onStoredThemeChanged = StoredThemeChanged
+        }
 
 
 viewKeyedImage : Int -> ImageState -> ( String, Html Msg )
