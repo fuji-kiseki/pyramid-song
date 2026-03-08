@@ -85,10 +85,6 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GotFiles files ->
-            let
-                _ =
-                    Debug.log "" model.images
-            in
             ( model
             , List.head files
                 |> Maybe.map setImage
