@@ -7,16 +7,14 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Html.Keyed as Keyed
-import Html.Lazy exposing (lazy2)
 import Image exposing (Image, ImageSelector, ImageState, alterImageSelector, setImage)
 import Json.Decode as Decode
 import Json.Encode as Encode
-import Svg.Attributes
 import Task exposing (..)
 import Theme exposing (StoredTheme, Theme)
 import Views.Dialog as Dialog
-import Views.Icons exposing (viewImagePlus)
 import Views.Image as Image
+import Views.Layout exposing (viewLayoutGrid)
 import Views.Switch as ImagePicker
 import Views.Upload exposing (viewUpload)
 
@@ -88,12 +86,7 @@ view { modal, images, imageSelector, theme } =
                             |> Theme.toString
                        )
             ]
-        , Keyed.node "ul"
-            [ class "grid grid-cols-3 grid-rows-3 gap-1 max-w-fit m-auto" ]
-            (images
-                |> Dict.toList
-                |> List.map (\( index, imageState ) -> viewKeyedImage index imageState)
-            )
+        , viewLayoutGrid images OpenModal
         , Dialog.viewDialog
             { onClose = CloseModal
             , onConfirm =
@@ -259,24 +252,3 @@ subscriptions _ =
         { onSystemThemeChanged = SystemThemeChanged
         , onStoredThemeChanged = StoredThemeChanged
         }
-
-
-viewKeyedImage : String -> ImageState -> ( String, Html Msg )
-viewKeyedImage key image =
-    ( key, lazy2 viewImage key image )
-
-
-viewImage : String -> ImageState -> Html Msg
-viewImage key image =
-    div [ onClick (OpenModal key) ]
-        [ div
-            [ class "flex items-center select-none justify-center overflow-hidden h-50 w-50 cursor-pointer aspect-square"
-            ]
-            [ case image of
-                Image.Empty ->
-                    viewImagePlus [ Svg.Attributes.class "h-6 w-6" ]
-
-                Image.Loaded { url, name } ->
-                    img [ src url, alt name, draggable "false", class "object-cover w-full h-full block" ] []
-            ]
-        ]
