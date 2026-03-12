@@ -95,13 +95,16 @@ subscriptions { onSystemThemeChanged, onStoredThemeChanged } =
 
 {-| Resolve a StoredTheme to a concrete Theme given the current system theme.
 -}
-resolve : Theme -> StoredTheme -> Theme
+resolve : Theme -> Maybe StoredTheme -> Theme
 resolve systemTheme stored =
     case stored of
-        Explicit t ->
+        Just (Explicit t) ->
             t
 
-        Auto ->
+        Just Auto ->
+            systemTheme
+
+        Nothing ->
             systemTheme
 
 
@@ -126,7 +129,7 @@ storeValue systemTheme stored =
 apply : Theme -> StoredTheme -> Cmd msg
 apply systemTheme stored =
     applyTheme
-        { theme = toString (resolve systemTheme stored)
+        { theme = toString (resolve systemTheme (Just stored))
         , store = storeValue systemTheme stored
         }
 

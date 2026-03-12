@@ -10,9 +10,11 @@ import Html.Keyed as Keyed
 import Image exposing (Image, ImageSelector, ImageState, alterImageSelector, setImage)
 import Json.Decode as Decode
 import Json.Encode as Encode
+import Svg.Attributes
 import Task exposing (..)
 import Theme exposing (StoredTheme, Theme)
 import Views.Dialog as Dialog
+import Views.Icons exposing (viewMoon, viewSun)
 import Views.Image as Image
 import Views.Layout exposing (viewLayoutGrid)
 import Views.Switch as Switch
@@ -77,14 +79,12 @@ init flags =
 view : Model -> Html Msg
 view { modal, images, imageSelector, theme } =
     div []
-        [ button
-            [ onClick ToggleColorScheme ]
-            [ text <|
-                "to "
-                    ++ (Theme.toggle theme
-                            |> Theme.resolve theme.systemTheme
-                            |> Theme.toString
-                       )
+        [ button [ onClick ToggleColorScheme ]
+            [ if Theme.Light == Theme.resolve theme.systemTheme theme.storedTheme then
+                viewSun [ Svg.Attributes.class "h-6 w-6" ]
+
+              else
+                viewMoon [ Svg.Attributes.class "h-6 w-6" ]
             ]
         , viewLayoutGrid images OpenModal
         , Dialog.viewDialog
