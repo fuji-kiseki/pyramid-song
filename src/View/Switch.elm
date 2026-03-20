@@ -1,4 +1,4 @@
-module Views.Switch exposing (viewController, viewSwitch)
+module View.Switch exposing (viewController, viewSwitch)
 
 import Html exposing (..)
 import Html.Attributes exposing (class)

@@ -1,4 +1,4 @@
-module Views.Icons exposing (..)
+module View.Icons exposing (..)
 
 import Html exposing (Html)
 import Svg exposing (Attribute, circle, path, svg)

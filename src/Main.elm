@@ -14,12 +14,12 @@ import Json.Encode as Encode
 import Svg.Attributes
 import Task exposing (..)
 import Theme exposing (StoredTheme, Theme)
-import Views.Dialog as Dialog
-import Views.Icons exposing (viewMoon, viewSun)
-import Views.Image as Image
-import Views.Layout exposing (viewLayoutGrid)
-import Views.Switch as Switch
-import Views.Upload exposing (viewUpload)
+import View.Dialog as Dialog
+import View.Icons exposing (viewMoon, viewSun)
+import View.Image as Image
+import View.Layout exposing (viewLayoutGrid)
+import View.Switch as Switch
+import View.Upload exposing (viewUpload)
 
 
 type alias Model =
