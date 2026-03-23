@@ -38,7 +38,7 @@
             pname = "3x3-generator";
             src = self;
             fetcherVersion = 1;
-            hash = "sha256-r9yPZvUddbN8ljmEjXEzYdhLnBa7dkocalIsZwoeQJg=";
+            hash = "sha256-9PGCbXBTXkXUbq4RYwxSpM0YTGh/K/d+YgxjAV+t9YQ=";
           };
 
           preConfigure = pkgs.elmPackages.fetchElmDeps {
